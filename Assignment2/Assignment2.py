@@ -49,9 +49,9 @@ def breadth_first_search(startState, goalState):
             print 'Iterations',i
             return s
 
-        setPixelGreen(s.x, s.y) 
-        if i % 5000 == 0 or i==1:
-            ImageObject.save('path.png', None)
+        # setPixelGreen(s.x, s.y) 
+        # if i % 5000 == 0 or i==1:
+            # ImageObject.save('path.png', None)
 
         up = MyState(None, s, s.x, s.y - 1)
         down = MyState(None, s, s.x, s.y + 1)
@@ -62,21 +62,17 @@ def breadth_first_search(startState, goalState):
 
         for c in borders:
             if not (c.x < 0 or c.x >= 500) and not (c.y < 0 or c.y >= 500):
-                # new_cost = cost_so_far[current] + graph.cost(current, next)
                 new_cost = s.cost + getGreenColor(c.x, c.y) 
-                if (c.x, c.y) not in explored or ((c.x,c.y) in explored and new_cost < explored[(c.x,c.y)].cost):
+                if (c.x, c.y) in explored:
+                    if ((c.x,c.y) in explored and new_cost < explored[(c.x,c.y)].cost):
+                        c.cost = new_cost
+                        c.parent = s
+                else:
                     c.parent = s
-                    # c.cost = s.cost + getGreenColor(c.x, c.y) 
-                    c.cost = new_cost + h(c.x, c.y)
-                    heapq.heappush(q, (c.cost, c))
-
+                    c.cost = new_cost
+                    heapq.heappush(q, (c.cost+h(c.x,c.y), c))
                     explored[(c.x, c.y)] = c;
-                # else:
-                    # if new_cost < explored[(c.x,c.y)].cost:
-                    #     print 'BOOYA', new_cost, explored[(c.x,c.y)].cost
-                    # else:
-                    #     print new_cost, explored[(c.x,c.y)].cost
-                    # time.sleep(.1)
+               
         # time.sleep(5)
     raise Exception("There is no path to the goal")
 
@@ -88,7 +84,7 @@ def setPixelRed(x, y):
     ImageObject.putpixel((x, y), (255, 0, 0, 255))
 
 def h(x,y):
-    return abs(x-400) + abs(y-400)
+    return  1 * (abs(400-x) + abs(400-y))
 
 def setPixelGreen(x, y):
     ImageObject.putpixel((x, y), (0, 255, 0, 255))
