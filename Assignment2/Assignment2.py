@@ -4,6 +4,7 @@ import time
 import math
 import copy
 import heapq
+import cProfile
 
 ImageObject = None
 used = []
@@ -64,12 +65,16 @@ def breadth_first_search(startState, goalState):
             if not (c.x < 0 or c.x >= 500) and not (c.y < 0 or c.y >= 500):
                 new_cost = s.cost + getGreenColor(c.x, c.y) 
                 if (c.x, c.y) in explored:
+                    # Reduces interations but increases 
                     if ((c.x,c.y) in explored and new_cost < explored[(c.x,c.y)].cost):
-                        c.cost = new_cost
-                        c.parent = s
+                        for j, item in enumerate(q):
+                            if item[1].x == c.x and item[1].y == c.y:
+                                q[j][1].cost = new_cost
+                                break
                 else:
                     c.parent = s
                     c.cost = new_cost
+                    # heapq.heappush(q, (c.cost, c)) 
                     heapq.heappush(q, (c.cost+h(c.x,c.y), c))
                     explored[(c.x, c.y)] = c;
                
@@ -84,7 +89,7 @@ def setPixelRed(x, y):
     ImageObject.putpixel((x, y), (255, 0, 0, 255))
 
 def h(x,y):
-    return  1 * (abs(400-x) + abs(400-y))
+    return  14 * (abs(400-x) + abs(400-y))
 
 def setPixelGreen(x, y):
     ImageObject.putpixel((x, y), (0, 255, 0, 255))
@@ -97,6 +102,7 @@ used = [[False for i in range(ImageObject.size[0] + 1)]
         for j in range(ImageObject.size[1] + 1)]
 origin = MyState(0.0, None, 100, 100)
 goal = MyState(0.0, None, 400, 400)
+# cProfile.run('breadth_first_search(origin, goal)')
 print breadth_first_search(origin, goal).cost
 # ImageObject.resize((ImageObject.size[0]/2, ImageObject.size[1]/2)).save('maze3_solved.png', None)
 ImageObject.save('path.png', None)
