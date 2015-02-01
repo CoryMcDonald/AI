@@ -49,7 +49,8 @@ class puzzleState:
 
 def breadth_first_search(startState, goalState):
     q = []
-    explored = []
+    explored = dict()
+    # append =
     heapq.heappush(q, (startState.cost, startState))
     pops = 0
     while len(q) > 0:
@@ -71,8 +72,10 @@ def breadth_first_search(startState, goalState):
         #     return s
 
         # setPixelGreen(s.x, s.y)
+        print pops, s.cost
         if pops % 5000 == 0 or pops==1:
             saveImage(s.pieces)
+        # time.sleep(2)
         validMoves = []
 
         pieces = s.pieces
@@ -92,11 +95,23 @@ def breadth_first_search(startState, goalState):
                             validMoves.append(temp)
                             # print temp
         
+        # print len(validMoves)
         for move in validMoves:
-            if move not in explored:
+            # Here for speed purposes
+            j = 0 
+            used = [0 for x in range(100)]
+            for xy in perimeter:
+                used[10 * xy[0] + xy[1]] = 0
+            for piece in move:
+                for coordinate in piece:
+                    used[10 * coordinate[0] + coordinate[1]] = j
+                j = j +1
+
+            strused = ''.join(map(str, used))
+            if strused not in explored:
                 c = puzzleState(s.cost+1, s, move)
                 heapq.heappush(q, (c.cost, c))
-                explored.append(move)
+                explored[strused] = True
 
         # time.sleep(5)
     raise Exception("There is no path to the goal")
