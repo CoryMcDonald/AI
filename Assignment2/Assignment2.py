@@ -5,6 +5,7 @@ import math
 import copy
 import heapq
 import cProfile
+import datetime
 
 ImageObject = None
 perimeter = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (0, 1), (1, 1), (2, 1), (7, 1), (8, 1), (9, 1), (0, 2), (1, 2), (8, 2), (9, 2), (0, 3), (4, 3), (9, 3), (0, 4), (3, 4),
@@ -63,7 +64,7 @@ def breadth_first_search(startState, goalState):
         if s.pieces[0][0] == (5,1):
             parentState = s
             saveImage(s.pieces)
-            print 'POPS', pops
+            print  pops, s.cost
             return s;
         # if s.isEqual(goalState):
         #     parentState = s
@@ -72,9 +73,9 @@ def breadth_first_search(startState, goalState):
         #     return s
 
         # setPixelGreen(s.x, s.y)
-        print pops, s.cost
-        if pops % 5000 == 0 or pops==1:
-            saveImage(s.pieces)
+        # print pops, s.cost
+        # if pops % 5000 == 0 or pops==1:
+        #     saveImage(s.pieces)
         # time.sleep(2)
         validMoves = []
 
@@ -98,7 +99,7 @@ def breadth_first_search(startState, goalState):
         # print len(validMoves)
         for move in validMoves:
             # Here for speed purposes
-            j = 0 
+            j = 1
             used = [0 for x in range(100)]
             for xy in perimeter:
                 used[10 * xy[0] + xy[1]] = 0
@@ -216,4 +217,6 @@ saveImage(pieces)
 origin = puzzleState(0.0, None, pieces)
 goal = puzzleState(0.0, None, goalPiece)
 
+print datetime.datetime.now()
 print breadth_first_search(origin, goal).cost
+print datetime.datetime.now()
