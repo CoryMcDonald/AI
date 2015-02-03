@@ -7,8 +7,8 @@ import heapq
 import cProfile
 
 ImageObject = None
-perimeter = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (0, 1), (1, 1), (2, 1), (7, 1), (8, 1), (9, 1), (0, 2), (1, 2), (8, 2), (9, 2), (0, 3), (4, 3), (9, 3), (0, 4), (3, 4),
-             (4, 4), (9, 4), (0, 5), (9, 5), (0, 6), (9, 6), (0, 7), (1, 7), (8, 7), (9, 7), (0, 8), (1, 8), (2, 8), (7, 8), (8, 8), (9, 8), (0, 9), (1, 9), (2, 9), (3, 9), (4, 9), (5, 9), (6, 9), (7, 9), (8, 9), (9, 9)]
+perimeter = [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [0, 1], [1, 1], [2, 1], [7, 1], [8, 1], [9, 1], [0, 2], [1, 2], [8, 2], [9, 2], [0, 3], [4, 3], [9, 3], [0, 4], [3, 4],
+             [4, 4], [9, 4], [0, 5], [9, 5], [0, 6], [9, 6], [0, 7], [1, 7], [8, 7], [9, 7], [0, 8], [1, 8], [2, 8], [7, 8], [8, 8], [9, 8], [0, 9], [1, 9], [2, 9], [3, 9], [4, 9], [5, 9], [6, 9], [7, 9], [8, 9], [9, 9]]
 
 
 class MyState:
@@ -50,6 +50,7 @@ class puzzleState:
 def breadth_first_search(startState, goalState):
     q = []
     explored = dict()
+    # explored2 = []
     # append =
     heapq.heappush(q, (startState.cost, startState))
     pops = 0
@@ -58,47 +59,40 @@ def breadth_first_search(startState, goalState):
         s = heapq.heappop(q)[1]
         # if(i % 5000 < 1000):
         # setPixelGreen(s.x, s.y)
-        # print pops
+        print pops,',',s.cost
         # print s.pieces[0][0] == (5,1)
-        if s.pieces[0][0] == (5,1):
+        if s.pieces[0][0] == [5,1]:
             parentState = s
             saveImage(s.pieces)
             print 'POPS', pops
             return s;
-        # if s.isEqual(goalState):
-        #     parentState = s
-        #     saveImage(s.pieces)
-        #     print 'POPS', pops
-        #     return s
 
-        # setPixelGreen(s.x, s.y)
-        print pops, s.cost
-        if pops % 5000 == 0 or pops==1:
-            saveImage(s.pieces)
-        # time.sleep(2)
         validMoves = []
 
         pieces = s.pieces
+        # 11 times
         for piecesIndex,piece in enumerate(pieces):
             # Try and move piece up, down, left, right
             for x in range(-1,2):
                 for y in range (-1, 2):
                     if not abs(x) == abs(y):
+                        # print ('Moving piece' + )
                         tempPiece = list(piece)
+                        # number of points in the piece, typically 4
                         for i,coordinate in enumerate(piece):
-                            tempPiece[i] = (piece[i][0]+x, piece[i][1]+y)
-                        # print piece, tempPiece, x, y
+                            tempPiece[i] = [piece[i][0]+x, piece[i][1]+y]
+                        
                         temp = list(pieces)
                         temp[piecesIndex] = tempPiece
                         # print temp, pieces
                         if checkValid(temp):
                             validMoves.append(temp)
                             # print temp
-        
+
         # print len(validMoves)
         for move in validMoves:
             # Here for speed purposes
-            j = 0 
+            j = 1
             used = [0 for x in range(100)]
             for xy in perimeter:
                 used[10 * xy[0] + xy[1]] = 0
@@ -109,22 +103,22 @@ def breadth_first_search(startState, goalState):
 
             strused = ''.join(map(str, used))
             if strused not in explored:
+            # if used not in explored2:
                 c = puzzleState(s.cost+1, s, move)
                 heapq.heappush(q, (c.cost, c))
+                # explored2.append(used)
                 explored[strused] = True
 
         # time.sleep(5)
     raise Exception("There is no path to the goal")
 
 def checkValid(thisPiece):
-    used = [[False for x in range(10)] for x in range(10)]
-    for xy in perimeter:
-        used[xy[0]][xy[1]] = True
+    usedBefore = []
     for i, piece in enumerate(thisPiece):
         for coordinate in piece:
-            if used[coordinate[0]][coordinate[1]] == True:
+            if coordinate in perimeter or coordinate in usedBefore:
                 return False
-            used[coordinate[0]][coordinate[1]] = True
+            usedBefore.append(coordinate)
     return True
 
 def getGreenColor(x, y):
@@ -176,17 +170,17 @@ def saveImage(pieces):
 # Initalizing Board
 used = [[False for x in range(10)] for x in range(10)]
 pieces = [None] * 11  # Initializing
-pieces[0] = [(1, 3), (2, 3), (1, 4), (2, 4)]  # (red)
-pieces[1] = [(1, 5), (1, 6), (2, 6)]  # (light,green
-pieces[2] = [(2, 5), (3, 5), (3, 6)]  # (lavender)
-pieces[3] = [(4, 7), (5, 7), (5, 8)]  # (yellow)
-pieces[4] = [(6, 7), (7, 7), (6, 8)]  # (brown)
-pieces[5] = [(3, 7), (3, 8), (4, 8)]  # (pink)
-pieces[6] = [(5, 4), (4, 5), (5, 5), (5, 6)]  # (darkcyan
-pieces[7] = [(6, 4), (6, 5), (7, 5), (6, 6)]  # (darkgreen
-pieces[8] = [(8, 5), (7, 6), (8, 6)]  # (lightcyan
-pieces[9] = [(6, 2), (5, 3), (6, 3)]  # (blue)
-pieces[10] = [(5, 1), (6, 1), (5, 2)]  # (orange)
+pieces[0] = [[1, 3], [2, 3], [1, 4], [2, 4]]  # red
+pieces[1] = [[1, 5], [1, 6], [2, 6]]          # light,green
+pieces[2] = [[2, 5], [3, 5], [3, 6]]          # lavender
+pieces[3] = [[4, 7], [5, 7], [5, 8]]          # yellow
+pieces[4] = [[6, 7], [7, 7], [6, 8]]          # brown
+pieces[5] = [[3, 7], [3, 8], [4, 8]]          # pink
+pieces[6] = [[5, 4], [4, 5], [5, 5], [5, 6]]  # darkcyan
+pieces[7] = [[6, 4], [6, 5], [7, 5], [6, 6]]  # darkgreen
+pieces[8] = [[8, 5], [7, 6], [8, 6]]          # lightcyan
+pieces[9] = [[6, 2], [5, 3], [6, 3]]          # blue
+pieces[10] = [[5, 1], [6, 1], [5, 2]]         # orange
 
 for xy in perimeter:
     used[xy[0]][xy[1]] = True
@@ -199,19 +193,9 @@ colors = [(244, 67, 54, 255), (139, 195, 74, 255), (156, 39, 176, 255), (255, 23
 
 goalPiece = [None] * 11  # Initializing
 goalPiece[0] = [(1, 3), (2, 3), (1, 4), (2, 4)]  # (red)
-goalPiece[1] = [(1, 5), (1, 6), (2, 6)]  # (light,green
-goalPiece[2] = [(2, 5), (3, 5), (3, 6)]  # (lavender)
-goalPiece[3] = [(4, 7), (5, 7), (5, 8)]  # (yellow)
-goalPiece[4] = [(6, 7), (7, 7), (6, 8)]  # (brown)
-goalPiece[5] = [(3, 7), (3, 8), (4, 8)]  # (pink)
-goalPiece[6] = [(5, 4), (4, 5), (5, 5), (5, 6)]  # (darkcyan
-goalPiece[7] = [(6, 4), (6, 5), (7, 5), (6, 6)]  # (darkgreen
-goalPiece[8] = [(8, 5), (7, 6), (8, 6)]  # (lightcyan
-goalPiece[9] = [(6, 2), (5, 3), (6, 3)]  # (blue)
-goalPiece[10] = [(4, 1), (5, 1), (4, 2)]  # (orange)
 
 
-saveImage(pieces)
+# saveImage(pieces)
 
 origin = puzzleState(0.0, None, pieces)
 goal = puzzleState(0.0, None, goalPiece)
