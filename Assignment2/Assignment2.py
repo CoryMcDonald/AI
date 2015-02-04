@@ -1,3 +1,4 @@
+import pdb
 from PIL import Image
 from Queue import PriorityQueue
 import time
@@ -50,7 +51,8 @@ class puzzleState:
 def breadth_first_search(startState, goalState):
     q = []
     explored = dict()
-    # explored2 = []
+
+    explored2 = []
     # append =
     heapq.heappush(q, (startState.cost, startState))
     pops = 0
@@ -61,7 +63,7 @@ def breadth_first_search(startState, goalState):
         # setPixelGreen(s.x, s.y)
         print pops,',',s.cost
         # print s.pieces[0][0] == (5,1)
-        if s.pieces[0][0] == [5,1]:
+        if s.pieces[9][0] == [5,1]:
             parentState = s
             saveImage(s.pieces)
             print 'POPS', pops
@@ -70,6 +72,9 @@ def breadth_first_search(startState, goalState):
         validMoves = []
 
         pieces = s.pieces
+
+        # saveImage(pieces)
+        # time.sleep(3)
         # 11 times
         for piecesIndex,piece in enumerate(pieces):
             # Try and move piece up, down, left, right
@@ -93,20 +98,20 @@ def breadth_first_search(startState, goalState):
         for move in validMoves:
             # Here for speed purposes
             j = 1
-            used = [0 for x in range(100)]
-            for xy in perimeter:
-                used[10 * xy[0] + xy[1]] = 0
-            for piece in move:
-                for coordinate in piece:
-                    used[10 * coordinate[0] + coordinate[1]] = j
-                j = j +1
+            # used = [0 for x in range(100)]
+            # for xy in perimeter:
+            #     used[10 * xy[0] + xy[1]] = 0
+            # for piece in move:
+            #     for coordinate in piece:
+            #         used[10 * coordinate[0] + coordinate[1]] = j
+            #     j = j +1
 
-            strused = ''.join(map(str, used))
-            if strused not in explored:
-            # if used not in explored2:
+            # strused = ''.join(map(str, used))
+            # if strused not in explored:
+            if move not in explored2:
                 c = puzzleState(s.cost+1, s, move)
                 heapq.heappush(q, (c.cost, c))
-                # explored2.append(used)
+                # explored2.append(move)
                 explored[strused] = True
 
         # time.sleep(5)
