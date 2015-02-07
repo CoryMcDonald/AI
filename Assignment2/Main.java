@@ -1,13 +1,18 @@
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
-
 public class Main {
 
     private static Coordinate[] perimeter;
-
+    private static Coordinate[][] pieces;
     public static void main(String[] args) {
+
         perimeter = new Coordinate[]{ new Coordinate(0, 0), new Coordinate(1, 0), new Coordinate(2, 0), new Coordinate(3, 0), new Coordinate(4, 0), new Coordinate(5, 0), new Coordinate(6, 0), new Coordinate(7, 0), new Coordinate(8, 0), new Coordinate(9, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(7, 1), new Coordinate(8, 1), new Coordinate(9, 1), new Coordinate(0, 2), new Coordinate(1, 2), new Coordinate(8, 2), new Coordinate(9, 2), new Coordinate(0, 3), new Coordinate(4, 3), new Coordinate(9, 3), new Coordinate(0, 4), new Coordinate(3, 4), new Coordinate(4, 4), new Coordinate(9, 4), new Coordinate(0, 5), new Coordinate(9, 5), new Coordinate(0, 6), new Coordinate(9, 6), new Coordinate(0, 7), new Coordinate(1, 7), new Coordinate(8, 7), new Coordinate(9, 7), new Coordinate(0, 8), new Coordinate(1, 8), new Coordinate(2, 8), new Coordinate(7, 8), new Coordinate(8, 8), new Coordinate(9, 8), new Coordinate(0, 9), new Coordinate(1, 9), new Coordinate(2, 9), new Coordinate(3, 9), new Coordinate(4, 9), new Coordinate(5, 9), new Coordinate(6, 9), new Coordinate(7, 9), new Coordinate(8, 9), new Coordinate(9, 9) };
 
-        Coordinate[][] pieces = new Coordinate[11][4];
+        pieces = new Coordinate[11][4];
         pieces[0] = new Coordinate[]{new Coordinate(1, 3), new Coordinate(2, 3), new Coordinate(1, 4), new Coordinate(2, 4)};
         pieces[1] = new Coordinate[]{new Coordinate(1, 5), new Coordinate(1, 6), new Coordinate(2, 6)};
         pieces[2] = new Coordinate[]{new Coordinate(2, 5), new Coordinate(3, 5), new Coordinate(3, 6)};
@@ -20,90 +25,144 @@ public class Main {
         pieces[9] = new Coordinate[]{new Coordinate(6, 2), new Coordinate(5, 3), new Coordinate(6, 3)};
         pieces[10] = new Coordinate[]{new Coordinate(5, 1), new Coordinate(6, 1), new Coordinate(5, 2)};
 
-        State origin = new State(null, 0, pieces);
-        System.out.println(search(origin).cost);
+        Coordinate[] offset = new Coordinate[] { new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0),
+                new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0),
+                new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0)};
+
+        State origin = new State(null, 0, offset);
+        colors = new Color[]{ new Color(0xF44336),new Color(0x8BC34A),new Color(0xB39DDB),new Color(0xFFEB3B),new Color(0x795548),new Color(0xF48FB1),new Color(0x006064),new Color(0x1B5E20),new Color(0xB2EBF2),new Color(0x2196F3),new Color(0xFF9800) };
+
+//              printBoard(offset);
+        System.out.println(search(origin, new Coordinate(5, -2)).cost);
+//        System.out.println(search(origin, new Coordinate(0,1)).cost);
+
     }
-    private static State search(State origin)
+    private static Color[] colors;
+    private static void createImageForDebugging(Coordinate[] offset)
+    {
+        BufferedImage off_Image = new BufferedImage(300, 300, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = off_Image.createGraphics();
+        g2.setColor(Color.white);
+        g2.fillRect(0, 0, 300, 300);
+
+        int pixelSize = 30;
+        for(Coordinate cord : perimeter)
+        {
+            g2.setColor(Color.black);
+            g2.fillRect(cord.x*pixelSize,cord.y*pixelSize,pixelSize,pixelSize);
+        }
+        for(int i=0; i<pieces.length; i++)
+        {
+            g2.setColor(colors[i]);
+            for(int j=0; j< pieces[i].length; j++)
+            {
+                g2.fillRect((pieces[i][j].x+ offset[i].x) *pixelSize,(pieces[i][j].y+ offset[i].y)*pixelSize,pixelSize,pixelSize);
+            }
+        }
+
+        try {
+            File outputfile = new File("image.png");
+            ImageIO.write(off_Image, "png", outputfile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static State search(State origin, Coordinate goal)
     {
         Queue<State> queue = new LinkedList<State>();
-        Hashtable<String, Coordinate[][]> used = new Hashtable<String, Coordinate[][]>();
-        Coordinate goal = new Coordinate(5,1);
+//        PriorityQueue<State> queue = new PriorityQueue<State>();
+        HashMap<String, State> used = new HashMap<String, State>();
+        boolean preemptiveValid = true;
 
         queue.add(origin);
+        int pops =0;
         while(queue.size() > 0) {
-
+            int validBoards = 0;
             State s = queue.remove();
-            if (s.pieces[0][0].x  == goal.x && s.pieces[0][0].y == goal.y) {
+            pops++;
+
+            if (s.pieceOffset[0].equals(goal)) {
+                System.out.println(pops);
                 return s;
             }
 
-            ArrayList<Coordinate[][]> validMoves = new ArrayList<Coordinate[][]>();
+            ArrayList<Coordinate[]> validMoves = new ArrayList<Coordinate[]>();
 
-            for (int i = 0; i < s.pieces.length; i++) {
+            for (int i = 0; i < s.pieceOffset.length; i++) {
                 for (int x = -1; x <= 1; x++) {
                     for (int y = -1; y <= 1; y++) {
-                        if (Math.abs(x) != Math.abs(y)) {
-                            Coordinate[] tempPiece = new Coordinate[s.pieces[i].length];
-                            for (int j = 0; j < s.pieces[i].length; j++) {
-                                tempPiece[j] = new Coordinate(s.pieces[i][j].x + x, s.pieces[i][j].y + y);
-                            }
-                            if(checkValid(s.pieces, i, tempPiece))
-                            {
-                                Coordinate[][] copy = new Coordinate[11][4];
-                                System.arraycopy(s.pieces, 0, copy, 0, s.pieces.length);
-                                copy[i] = tempPiece;
+                        if (Math.abs(x) != Math.abs(y))
+                        {
+                            Coordinate[] copyOfPieceOffset = new Coordinate[s.pieceOffset.length];
+                            System.arraycopy(s.pieceOffset, 0, copyOfPieceOffset, 0, copyOfPieceOffset.length);
+                            copyOfPieceOffset[i] = new Coordinate(copyOfPieceOffset[i].x+x,copyOfPieceOffset[i].y+y);
 
-                                validMoves.add(copy);
+                            if(checkValid(copyOfPieceOffset))
+                            {
+                                validBoards++;
+                                validMoves.add(copyOfPieceOffset);
                             }
-//                            System.out.println();
                         }
                     }
                 }
             }
-            if(s.cost % 10 == 0)
-                System.out.println(s.cost);
-            for (Coordinate[][] move : validMoves)
-            {
-                StringBuilder moveString = new StringBuilder();
-                for(Coordinate[] coordinateArray : move)
-                {
-                    for(Coordinate coordinate : coordinateArray)
-                    {
-                        moveString.append(coordinate.x + " " + coordinate.y);
-                    }
-                }
-                if(!used.containsKey(moveString.toString()))
-                {
-                    queue.add(new State(s, s.cost + 1, move));
-                    used.put(moveString.toString(), move);
-                }
-            }
 //            break;
+            if(pops% 1000 == 0)
+                System.out.println(pops + " " + s.cost);
+            for (Coordinate[] moves : validMoves)
+            {
+                String string = "";
+                for(Coordinate m : moves)
+                    string += m.x + " " + m.y + " ";
 
-        }
-
-        return new State(null,-1, new Coordinate[][] { new Coordinate[] { new Coordinate(0,0 )}});
-    }
-    public static boolean checkValid(Coordinate[][] pieces, int currentPieceIndex, Coordinate[] pieceToCheck)
-    {
-        for(Coordinate coordinate : pieceToCheck)
-        {
-            for(int i =0; i<pieces.length; i++) {
-                if (i != currentPieceIndex) {
-                    for(int j =0; j<pieces[i].length; j++) {
-                        if (pieces[i][j].x == coordinate.x && pieces[i][j].y == coordinate.y)
-                            return false;
-                    }
-                    for(int j =0; j< perimeter.length; j++)
+                int cost = s.cost + 1;
+                State mystate;
+                if(used.containsKey(string))
+                {
+                    if(cost < (mystate=used.get(string)).cost)
                     {
-                        if(perimeter[j].x == coordinate.x && perimeter[j].y == coordinate.y)
-                            return false;
+                        mystate.cost = cost;
+                        mystate.heuristicAndCost = cost +  heuristic(mystate.pieceOffset[0], goal);
+                        mystate.parent = s;
                     }
+                }else
+//                if(!used.containsKey(string))
+                {
+                    mystate = new State(s, s.cost + 1, moves);
+                    mystate.heuristicAndCost = mystate.cost + heuristic(s.pieceOffset[0], goal);
+                    queue.add(mystate);
+                    used.put(string, mystate);
                 }
             }
-
         }
-//        System.out.println("Returning true");
+
+        return new State(null,-1, new Coordinate[] { new Coordinate(0,0 )});
+    }
+
+    private static int heuristic(Coordinate piece, Coordinate Goal) {
+        return (Math.abs(Goal.x-piece.x) + Math.abs(Goal.y-piece.y));
+    }
+
+    public static boolean checkValid(Coordinate[] pieceOffset)
+    {
+        boolean used[][] = new boolean[10][10];
+        for(Coordinate perim : perimeter)
+        {
+            used[perim.x][perim.y] = true;
+        }
+        for(int i =0; i<pieces.length; i++) {
+            for(int j=0;j< pieces[i].length; j++) {
+                int x = pieces[i][j].x + pieceOffset[i].x;
+                int y = pieces[i][j].y + pieceOffset[i].y;
+                if(x >= 0 && y >= 0 && x<=10 && y<=10 &&  !used[x][y])
+                {
+                    used[x][y] = true;
+                }else
+                {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 }
@@ -118,18 +177,57 @@ class Coordinate
         this.y = y;
 //        this.Color = color;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Coordinate)) return false;
+
+        Coordinate that = (Coordinate) o;
+
+        if (x != that.x) return false;
+        if (y != that.y) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = x;
+        result = 31 * result + y;
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "(" +
+                "" + x +
+                ", " + y +
+                ')';
+    }
 }
-class State
+class State implements Comparable<State>
 {
     int cost;
+    int heuristicAndCost;
     State parent;
-    Coordinate[][] pieces;
+    Coordinate[] pieceOffset;
 
-    public State(State parent, int cost, Coordinate[][] pieces)
+    public State(State parent, int cost, Coordinate[] pieces)
     {
         this.cost = cost;
         this.parent = parent;
-        this.pieces = pieces;
+        this.pieceOffset = pieces;
     }
 
+    @Override
+    public int compareTo(State state) {
+        if(heuristicAndCost > state.heuristicAndCost) {
+            return 1;
+        }
+        else if(heuristicAndCost == state.heuristicAndCost)
+            return 0;
+
+        return -1;
+    }
 }
