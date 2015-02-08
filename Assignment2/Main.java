@@ -69,8 +69,8 @@ public class Main {
     }
     private static State search(State origin, Coordinate goal)
     {
-        Queue<State> queue = new LinkedList<State>();
-//        PriorityQueue<State> queue = new PriorityQueue<State>();
+//        Queue<State> queue = new LinkedList<State>();
+        PriorityQueue<State> queue = new PriorityQueue<State>();
         HashMap<String, State> used = new HashMap<String, State>();
         boolean preemptiveValid = true;
 

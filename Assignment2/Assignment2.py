@@ -58,7 +58,7 @@ def breadth_first_search(startState, goalState):
         pops = pops + 1
         s = heapq.heappop(q)[1]
         # print s.pieces[0][0] == (5,1)
-        if s.pieces[0] == [0,1]:
+        if s.pieces[0] == [4,-2]:
             parentState = s
             saveImage(s.pieces)
             print 'POPS', pops
@@ -81,9 +81,7 @@ def breadth_first_search(startState, goalState):
                         tempPieceOffset[piecesIndex] = [tempPieceOffset[piecesIndex][0]+x, tempPieceOffset[piecesIndex][1]+y]
                         if checkValid(tempPieceOffset):
                             validBoards = validBoards+1
-        # print len(validMoves)
                             validMoves.append(tempPieceOffset)
-                            # print tempPieceOffset
 
         for move in validMoves:
             j = 1
@@ -93,7 +91,6 @@ def breadth_first_search(startState, goalState):
                 heapq.heappush(q, (c.cost, c))
                 explored[strused] = True
 
-        # time.sleep(5)
         print pops,s.cost
 
     raise Exception("There is no path to the goal")
