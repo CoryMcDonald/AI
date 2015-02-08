@@ -33,7 +33,7 @@ public class Main {
         colors = new Color[]{ new Color(0xF44336),new Color(0x8BC34A),new Color(0xB39DDB),new Color(0xFFEB3B),new Color(0x795548),new Color(0xF48FB1),new Color(0x006064),new Color(0x1B5E20),new Color(0xB2EBF2),new Color(0x2196F3),new Color(0xFF9800) };
 
 //              printBoard(offset);
-        System.out.println(search(origin, new Coordinate(5, -2)).cost);
+        System.out.println(search(origin, new Coordinate(4, -2)).cost);
 //        System.out.println(search(origin, new Coordinate(0,1)).cost);
 
     }
@@ -107,7 +107,7 @@ public class Main {
                 }
             }
 //            break;
-            if(pops% 1000 == 0)
+            if(pops% 10000 == 0)
                 System.out.println(pops + " " + s.cost);
             for (Coordinate[] moves : validMoves)
             {
@@ -124,6 +124,8 @@ public class Main {
                         mystate.cost = cost;
                         mystate.heuristicAndCost = cost +  heuristic(mystate.pieceOffset[0], goal);
                         mystate.parent = s;
+                        queue.add(mystate);
+                        used.put(string, mystate);
                     }
                 }else
 //                if(!used.containsKey(string))
