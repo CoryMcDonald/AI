@@ -30,59 +30,30 @@ public class Main {
                 new Coordinate(0,0), new Coordinate(0,0), new Coordinate(0,0)};
 
         State origin = new State(null, 0, offset);
-        colors = new Color[]{ new Color(0xF44336),new Color(0x8BC34A),new Color(0xB39DDB),new Color(0xFFEB3B),new Color(0x795548),new Color(0xF48FB1),new Color(0x006064),new Color(0x1B5E20),new Color(0xB2EBF2),new Color(0x2196F3),new Color(0xFF9800) };
 
-//              printBoard(offset);
-        System.out.println(search(origin, new Coordinate(4, -2)).cost);
-//        System.out.println(search(origin, new Coordinate(0,1)).cost);
+        search(origin, new Coordinate(4, -2), false);
+        search(origin, new Coordinate(4, -2), true);
 
     }
-    private static Color[] colors;
-    private static void createImageForDebugging(Coordinate[] offset)
-    {
-        BufferedImage off_Image = new BufferedImage(300, 300, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = off_Image.createGraphics();
-        g2.setColor(Color.white);
-        g2.fillRect(0, 0, 300, 300);
 
-        int pixelSize = 30;
-        for(Coordinate cord : perimeter)
-        {
-            g2.setColor(Color.black);
-            g2.fillRect(cord.x*pixelSize,cord.y*pixelSize,pixelSize,pixelSize);
-        }
-        for(int i=0; i<pieces.length; i++)
-        {
-            g2.setColor(colors[i]);
-            for(int j=0; j< pieces[i].length; j++)
-            {
-                g2.fillRect((pieces[i][j].x+ offset[i].x) *pixelSize,(pieces[i][j].y+ offset[i].y)*pixelSize,pixelSize,pixelSize);
-            }
-        }
-
-        try {
-            File outputfile = new File("image.png");
-            ImageIO.write(off_Image, "png", outputfile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private static State search(State origin, Coordinate goal)
+    private static State search(State origin, Coordinate goal, boolean useHeuristic)
     {
-//        Queue<State> queue = new LinkedList<State>();
         PriorityQueue<State> queue = new PriorityQueue<State>();
         HashMap<String, State> used = new HashMap<String, State>();
-        boolean preemptiveValid = true;
 
         queue.add(origin);
         int pops =0;
         while(queue.size() > 0) {
-            int validBoards = 0;
             State s = queue.remove();
             pops++;
 
             if (s.pieceOffset[0].equals(goal)) {
-                System.out.println(pops);
+                if(useHeuristic == true) {
+                    System.out.println("astar2=" + pops);
+                }else
+                {
+                    System.out.println("bfs2=" + pops);
+                }
                 return s;
             }
 
@@ -99,16 +70,12 @@ public class Main {
 
                             if(checkValid(copyOfPieceOffset))
                             {
-                                validBoards++;
                                 validMoves.add(copyOfPieceOffset);
                             }
                         }
                     }
                 }
             }
-//            break;
-            if(pops% 10000 == 0)
-                System.out.println(pops + " " + s.cost);
             for (Coordinate[] moves : validMoves)
             {
                 String string = "";
@@ -122,16 +89,22 @@ public class Main {
                     if(cost < (mystate=used.get(string)).cost)
                     {
                         mystate.cost = cost;
-                        mystate.heuristicAndCost = cost +  heuristic(mystate.pieceOffset[0], goal);
+                        if(useHeuristic)
+                            mystate.heuristicAndCost = cost +  heuristic(mystate.pieceOffset[0], goal);
+                        else
+                            mystate.heuristicAndCost = cost;
+
                         mystate.parent = s;
                         queue.add(mystate);
                         used.put(string, mystate);
                     }
                 }else
-//                if(!used.containsKey(string))
                 {
                     mystate = new State(s, s.cost + 1, moves);
-                    mystate.heuristicAndCost = mystate.cost + heuristic(s.pieceOffset[0], goal);
+                    if(useHeuristic)
+                        mystate.heuristicAndCost = cost +  heuristic(mystate.pieceOffset[0], goal);
+                    else
+                        mystate.heuristicAndCost = cost;
                     queue.add(mystate);
                     used.put(string, mystate);
                 }
@@ -172,7 +145,7 @@ class Coordinate
 {
     public int x;
     public int y;
-//    public String Color;
+    //    public String Color;
     public Coordinate(int x, int y)
     {
         this.x = x;
