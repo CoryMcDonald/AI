@@ -1,2 +1,2 @@
-
-python AI.py
+# HAHA NOTHING HERE :)
+# python AI.py
