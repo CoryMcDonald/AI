@@ -23,7 +23,7 @@ class Controller implements MouseListener
 	private IAgent redAgent;
 	LinkedList<MouseEvent> mouseEvents; // a queue of mouse events (used by the human agent)
 	int selectedSprite; // the blue agent to draw a box around (used by the human agent)
-	private long agent_frame_time;
+	private static long agent_frame_time = 0;
 	private long blue_time_balance;
 	private long red_time_balance;
 	private long iter;
@@ -78,10 +78,8 @@ class Controller implements MouseListener
 		long timeC = System.nanoTime();
 		blue_time_balance = Math.min(blue_time_balance + agent_frame_time + timeA - timeB, 20 * agent_frame_time);
 		red_time_balance = Math.min(red_time_balance + agent_frame_time + timeB - timeC, 20 * agent_frame_time);
-		if(iter++ >= MAX_ITERS){
-			System.out.println("OUT OF TIME");
+		if(iter++ >= MAX_ITERS)
 			return false; // out of time
-		}
 		model.update();
 		if(amIblue)
 			model.setPerspectiveBlue(secret_symbol); // Blue on left, Red on right
@@ -118,16 +116,18 @@ class Controller implements MouseListener
 	}
 
 	private void calibrateTimer() {
-		long timeA = System.nanoTime();
-		for(int i = 0; i < 420; i++)
-			for(int y = 0; y < 60; y++)
-				for(int x = 0; x < 120; x++)
-					model.getTravelSpeed(10 * x, 10 * y);
-		long timeB = System.nanoTime();
-		agent_frame_time = timeB - timeA;
+		if(agent_frame_time == 0) {
+			long timeA = System.nanoTime();
+			for(int i = 0; i < 420; i++)
+				for(int y = 0; y < 60; y++)
+					for(int x = 0; x < 120; x++)
+						model.getTravelSpeed(10 * x, 10 * y);
+			long timeB = System.nanoTime();
+			agent_frame_time = timeB - timeA;
+			//System.out.println("Cycles=" + Long.toString(agent_frame_time));
+		}
 		blue_time_balance = 20 * agent_frame_time;
 		red_time_balance = blue_time_balance;
-		//System.out.println("Cycles=" + Long.toString(agent_frame_time));
 	}
 
 	MouseEvent nextMouseEvent() {

@@ -20,7 +20,7 @@ class SittingDuck implements IAgent
 	}
 
 	public void update(Model m) {
-		if(iter > 1000) {
+		// if(iter > 1000) {
 			for(int i = 0; i < m.getSpriteCountSelf(); i++) {
 
 				// Head for the opponent's flag
@@ -31,7 +31,7 @@ class SittingDuck implements IAgent
 					m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
 				}
 			}
-		}
+		// }
 
 /*
 		// Debug spew

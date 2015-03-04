@@ -7,11 +7,14 @@ class CoryMcDonald implements IAgent
 {
 	int iter;
 	int index; // a temporary value used to pass values around
-
-	int prevEnemyX;
-	int prevEnemyY;
+	boolean shadow;
+	private Point[] forkedEnemyLocation = new Point[3];
 
 	CoryMcDonald() {
+		reset();
+	}
+	CoryMcDonald(boolean shadow) {
+		this.shadow = shadow;
 		reset();
 	}
 
@@ -55,8 +58,10 @@ class CoryMcDonald implements IAgent
 	{
 		int numOfDead = 0;
 		for(int i = 0; i < m.getSpriteCountOpponent(); i++) {
-			if(m.getEnergyOpponent(i) < 0)
+			if(m.getEnergyOpponent(i) <= 0)
+			{
 				numOfDead++;
+			}
 		}
 		return numOfDead;
 	}
@@ -71,33 +76,6 @@ class CoryMcDonald implements IAgent
 		}
 	}
 
-	void beDefender(Model m, int i) {
-		// Find the opponent nearest to my flag
-		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
-		if(index >= 0) {
-			float enemyX = m.getXOpponent(index);
-			float enemyY = m.getYOpponent(index);
-
-			// Stay between the enemy and my flag
-			m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
-
-			// Throw boms if the enemy gets close enough
-			if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
-				m.throwBomb(i, enemyX, enemyY);
-		}
-		else {
-			// Guard the flag
-			m.setDestination(i, Model.XFLAG + Model.MAX_THROW_RADIUS, Model.YFLAG);
-		}
-
-		// If I don't have enough energy to throw a bomb, rest
-		if(m.getEnergySelf(i) < Model.BOMB_COST)
-			m.setDestination(i, m.getX(i), m.getY(i));
-
-		// Try not to die
-		avoidBombs(m, i);
-	}
-
 	void beAlternativeDefender(Model m, int i) {
 		// Find the opponent nearest to my flag
 		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
@@ -105,10 +83,21 @@ class CoryMcDonald implements IAgent
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
 
+			int numOfOpponentsThirdWay = 0;
+			int numOfOpponentsHalfWay = 0;
+			for(int j = 0; j < m.getSpriteCountOpponent(); j++) {
+				if(enemyX < Model.XMAX/1.75 )
+				{
+					numOfOpponentsThirdWay++;
+				}
+				if(enemyX < Model.XMAX/2)
+				{
+					numOfOpponentsHalfWay++;
+				}
+			}
 			//Oh snap enemy is on my side of the board imma attack em
-			if(enemyX < Model.XMAX/1.5 )
+			if(numOfOpponentsHalfWay <= 1 && m.getX(i) <  Model.XMAX/2 && numOfOpponentsThirdWay <= 2 )
 			{
-				// System.out.println("I'm in your area");
 				
 				float myX = m.getX(i);
 				float myY = m.getY(i);
@@ -122,7 +111,6 @@ class CoryMcDonald implements IAgent
 					m.throwBomb(i, myX - 10.0f * (myX - enemyX+m.getTravelSpeed(enemyX, enemyY)), myY - 10.0f * (myY - enemyY+m.getTravelSpeed(enemyX, enemyY))); 
 			}else
 			{			
-				// System.out.println("Defending");
 				// Stay between the enemy and my flag
 				m.setDestination(i, 0.5f * (Model.XFLAG + enemyX), 0.5f * (Model.YFLAG + enemyY));
 			}
@@ -144,8 +132,7 @@ class CoryMcDonald implements IAgent
 		avoidBombs(m, i);
 	}
 
-	void beFlagAttacker(Model m, int i) {
-		
+	void beFlagAttacker(Model m, int i) {		
 		//Head for flag
 		// Avoid opponents
 		float myX = m.getX(i);
@@ -154,11 +141,15 @@ class CoryMcDonald implements IAgent
 		if(index >= 0) {
 			float enemyX = m.getXOpponent(index);
 			float enemyY = m.getYOpponent(index);
+			float enemyDistanceFromFlag = sq_dist(enemyX, enemyY,  Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
 			float enemyDistance = sq_dist(enemyX, enemyY, myX, myY);
-			float distanceFromFlag = sq_dist(myX, myY, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+			// float enemyDistanceFromFlag = sq_dist(enemyX, enemyY, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+			float myDistanceFromFlag = sq_dist(myX, myY, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+
+			int deadEnemies = numberOfDeadOpponents(m);
 			//If an enemy is closer to me than 3x from the flag I am under attack I should defend myself!
-			if(enemyDistance*3 < distanceFromFlag && m.getEnergySelf(i) >= m.getEnergyOpponent(index) 
-				|| (numberOfDeadOpponents(m) > 0 && m.getEnergySelf(i) >= m.getEnergyOpponent(index)) && enemyDistance*.1 < distanceFromFlag )			
+			if(((myDistanceFromFlag < enemyDistanceFromFlag && numberOfDeadOpponents(m) == 0) 
+				|| (deadEnemies  > 0 && myDistanceFromFlag > enemyDistanceFromFlag  || m.getEnergyOpponent(index) < .25)) && m.getEnergySelf(i) > .25 && deadEnemies != 3 )			
 			{
 				// Get close enough to throw a bomb at the enemy
 				float dx = myX - enemyX;
@@ -166,39 +157,62 @@ class CoryMcDonald implements IAgent
 				float t = 1.0f / Math.max(Model.EPSILON, (float)Math.sqrt(dx * dx + dy * dy));
 				dx *= t;
 				dy *= t;
-				m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
 
+				// m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+				walkTheDinosaur(m,i, new Point(enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON)));
+
+				
 				// Throw bombs
 				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
+				{
+					if(forkedEnemyLocation[index] != null)
+					{
+						enemyX = forkedEnemyLocation[index].x;
+						enemyY = forkedEnemyLocation[index].y;
+					}
 					m.throwBomb(i, enemyX, enemyY);
+				}
 			
 			}
 			else
 			{
-				// System.out.println(m.getEnergySelf(i) + " < " +  m.getEnergyOpponent(index));
-				if ( m.getEnergySelf(i) < m.getEnergyOpponent(index)) 
+				float altUniverseEnemyDistance = sq_dist( forkedEnemyLocation[index].x,  forkedEnemyLocation[index].y, myX, myY);
+				if ( m.getEnergySelf(i) < m.getEnergyOpponent(index) 
+					&& enemyDistance > (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS)
+					&& altUniverseEnemyDistance > (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS))
 				{
 					m.setDestination(i, myX, myY); // Rest
 				}else
 				{
-					walkTheDinosaur(m,i, new Point(Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT));
-					// System.out.println("Flag distance: " + sq_dist(Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1,  Model.YFLAG_OPPONENT, myX, myY));
+					if(iter > 100) //Don't want to go into the battle, even though it's the fastest path
+					{
+						walkTheDinosaur(m,i, new Point(Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT));
+					}
+					else 
+					{
+						m.setDestination(i,Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+					}
+					//Fleeing
 					if(enemyDistance <= (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS) * (Model.MAX_THROW_RADIUS + Model.BLAST_RADIUS))
 					{
-						// System.out.println("Flee!!!");
 						m.setDestination(i, myX + 10.0f * (myX - enemyX), myY + 10.0f * (myY - enemyY));
 					}
 				}
 
 			}
+		}else
+		{
+			m.setDestination(i,Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
 		}
 		// Shoot at the flag if I can hit it
 		if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
 			m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
 		}
+		
 		// Try not to die
 		avoidBombs(m, i);
 	}
+
 
 	void beAggressor(Model m, int i) {
 		float myX = m.getX(i);
@@ -218,21 +232,21 @@ class CoryMcDonald implements IAgent
 				dx *= t;
 				dy *= t;
 
+				walkTheDinosaur(m,i, new Point(enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON)+1, enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON),(float)0));
 				// m.setDestination(i, enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON));
-				walkTheDinosaur(m,i, new Point(enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON), enemyY + dy * (Model.MAX_THROW_RADIUS - Model.EPSILON),(float)0));
-				// Throw bombs, enemy is close enough to me
-				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS)
+				// System.out.println( enemyX + dx * (Model.MAX_THROW_RADIUS - Model.EPSILON));
+				// System.out.println(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) + " <" +  Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS);
+				// System.out.println(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS);
+
+				if(forkedEnemyLocation[index] != null)
 				{
-					
-					//If the enemy is cornered
-					// if( myX > Model.XMAX-200 && myY < 150)
-					// {
-					// 	m.throwBomb(i, enemyX-40,enemyY); 
-					// }else
-					// {
-						// This should anticipate where the enemy is going to move and fire at that spot
-						m.throwBomb(i, myX - 10f * (myX - enemyX+m.getTravelSpeed(enemyX, enemyY)), myY - 10f * (myY - enemyY+m.getTravelSpeed(enemyX, enemyY))); 
-					// }
+					enemyX = forkedEnemyLocation[index].x;
+					enemyY = forkedEnemyLocation[index].y;
+				}
+				if(sq_dist(enemyX, enemyY, m.getX(i), m.getY(i)) <= (Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS))
+				{
+					System.out.println("I should throw a bomb!");
+					m.throwBomb(i, enemyX, enemyY); 
 				}
 			}
 			else {
@@ -266,14 +280,12 @@ class CoryMcDonald implements IAgent
 		float myY = m.getY(i);
 
 		int goalThreshold = 5;
-		// System.out.println(sq_dist(myX, myY, goal.x, goal.y));
-		if(sq_dist(myX, myY, goal.x, goal.y) <= 2500)
+		//Threshold for just going directly to that destination
+		if(sq_dist(myX, myY, goal.x, goal.y) <= 5000)
 		{
 			m.setDestination(i, goal.x, goal.y);
 		}else
 		{	
-
-		// if(myX )
 			PriorityQueue<Point> queue = new PriorityQueue<Point>();
 			HashSet<Point> used = new HashSet<Point>();
 
@@ -285,17 +297,11 @@ class CoryMcDonald implements IAgent
 				if((s.x > goal.x - goalThreshold && s.x < goal.x + goalThreshold) && (s.y > goal.y - goalThreshold && s.y < goal.y + goalThreshold) )
 				{
 					Point tempPoint = s;
-				// System.out.println(tempPoint);
 					while(tempPoint.parent != null && tempPoint.parent.parent != null)
 					{
 						tempPoint = tempPoint.parent;
 					}
-				// System.out.println(tempPoint);
-				// int distance = (int)Math.sqrt(sq_dist(tempPoint.x, tempPoint.y, goal.x, goal.y));
-				// System.out.println(distance);
-
 					m.setDestination(i, (float)tempPoint.x, (float)tempPoint.y);
-				//set destination to the top parent
 					break;
 				}
 				Point left = new Point(s.x-10, s.y, s.cost);
@@ -308,14 +314,15 @@ class CoryMcDonald implements IAgent
 
 					if(!used.contains(mystate)&& mystate.x > 0 && mystate.y >0 && mystate.x < Model.XMAX && mystate.y < Model.YMAX)
 					{
+						//Doing magic numbers trying to get it where the fasatest tiles are the ones getting used
 						float travelSpeed = (float)2.2-m.getTravelSpeed(mystate.x, mystate.y);
 						int distance = (int)Math.sqrt(sq_dist(mystate.x, mystate.y, goal.x, goal.y));
 						if ( travelSpeed < 0)
 							travelSpeed = 0;
-						mystate.cost += travelSpeed*2000 + distance;
-					// System.out.println(mystate + " - " + mystate.cost);
+						mystate.cost += travelSpeed*200 ;
+
 						mystate.parent = s;
-						mystate.heuristicAndCost = (int)mystate.cost;
+						mystate.heuristicAndCost = (int)mystate.cost + distance;
 						queue.add(mystate);
 						used.add(mystate);
 					}
@@ -323,21 +330,31 @@ class CoryMcDonald implements IAgent
 			}
 		}
 	}
-	public void update(Model m) {
-		// beFlagAttacker(m, 0);
-		// beFlagAttacker(m, 2);
-		// beFlagAttacker(m, 1);
-		beFlagAttacker(m, 0);
-		beAggressor(m, 1);
-		beAlternativeDefender(m, 2);
 
+	public void update(Model m) {
+		if(!shadow)
+		{
+			Controller cFork = m.getController().fork(new CoryMcDonald(true), new Mixed());
+			Model mFork = cFork.getModel();
+			for(int j = 0; j < 2; j++)
+			{
+				cFork.update();
+			}
+			for(int i = 0; i < mFork.getSpriteCountOpponent(); i++) 
+			{
+				forkedEnemyLocation[i] = new Point(mFork.getXOpponent(i), mFork.getYOpponent(i));
+			}
+		}
+		if(forkedEnemyLocation[0] != null)
+		{
+			beFlagAttacker(m, 0);
+			beAggressor(m, 1);
+			beAlternativeDefender(m, 2);
+		}
 
 		iter++;
 	}
-	private int heuristic(Point origin, Point goal)
-	{
-		return 1 * Math.abs((int)goal.x-(int)origin.x) + Math.abs((int)goal.y-(int)origin.y);
-	}
+
 }
 class Point implements Comparable<Point>
 {
@@ -363,16 +380,8 @@ class Point implements Comparable<Point>
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof Point)) return false;
-
 		Point that = (Point) o;
-
-        // System.out.println(x + " == " + that.x + " && " + y + " == " + that.y);
 		return ((int)x == (int)that.x && (int)y == (int)that.y);
-
-        // if (x != that.x) return false;
-        // if (y != that.y) return false;
-
-        // return false;
 	}
 	@Override
 	public int hashCode() {

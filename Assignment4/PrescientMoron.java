@@ -37,7 +37,12 @@ class PrescientMoron implements IAgent
 			Controller cFork = m.getController().fork(new PrescientMoronShadow(x, y), new OpponentShadow());
 			Model mFork = cFork.getModel();
 			for(int j = 0; j < 10; j++)
+			{
 				cFork.update();
+			}
+
+			// System.out.println("" + m.getXOpponent(sprite) + "," + m.getYOpponent(sprite) +"");
+			// System.out.println("" + mFork.getXOpponent(sprite) + "," + mFork.getYOpponent(sprite));
 
 			// See how close the current sprite got to the opponent's flag in the forked universe
 			float sqd = sq_dist(mFork.getX(sprite), mFork.getY(sprite), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
@@ -95,7 +100,16 @@ class PrescientMoron implements IAgent
 		}
 
 		public void update(Model m) {
-			// The imagined opponent does nothing
+			for(int i = 0; i < m.getSpriteCountSelf(); i++) {
+
+				// Head for the opponent's flag
+				m.setDestination(i, Model.XFLAG_OPPONENT - Model.MAX_THROW_RADIUS + 1, Model.YFLAG_OPPONENT);
+
+				// Shoot at the flag if I can hit it
+				if(sq_dist(m.getX(i), m.getY(i), Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT) <= Model.MAX_THROW_RADIUS * Model.MAX_THROW_RADIUS) {
+					m.throwBomb(i, Model.XFLAG_OPPONENT, Model.YFLAG_OPPONENT);
+				}
+			}
 		}
 	}
 }

@@ -99,6 +99,7 @@ public class View extends JFrame implements ActionListener {
 				if(s.energy >= 0) {
 					g.drawImage(image_robot_blue, (int)s.x - 12, (int)s.y - 32, null);
 
+					g.drawString((int)s.x+","+(int)s.y, (int)s.x-2, (int)s.y-35);
 					// Draw energy bar
 					g.setColor(new Color(0, 0, 128));
 					g.drawRect((int)s.x - 18, (int)s.y - 32, 3, 32);
@@ -122,7 +123,8 @@ public class View extends JFrame implements ActionListener {
 				Model.Sprite s = sprites_red.get(i);
 				if(s.energy >= 0) {
 					g.drawImage(image_robot_red, (int)(Model.XMAX - 1 - s.x) - 12, (int)(Model.YMAX - 1 - s.y) - 32, null);
-
+					
+					g.drawString((int)(Model.XMAX - 1 - s.x) + ","+(int)s.y, (int)(Model.XMAX - 1 - s.x), (int)(Model.YMAX - 1 - s.y)-35);
 					// Draw energy bar
 					g.setColor(new Color(128, 0, 0));
 					g.drawRect((int)(Model.XMAX - 1 - s.x) + 14, (int)(Model.YMAX - 1 - s.y) - 32, 3, 32);
@@ -151,8 +153,7 @@ public class View extends JFrame implements ActionListener {
 				Model.Bomb b = bombs.get(i);
 				int x = (int)b.getX();
 				int y = (int)b.getY();
-				if(b.isDetonating())
-					sound_doing.play();
+				
 				g.setColor(new Color(128, 0, 64));
 				int r = (int)(b.position - b.distance);
 				g.drawOval(x - r, y - r, 2 * r, 2 * r);

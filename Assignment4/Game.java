@@ -26,10 +26,10 @@ class Game {
 		//Controller.doBattle(new Human(), new SittingDuck());
 		//Controller.doBattle(new Mixed(), new SittingDuck());
 		//Controller.doBattle(new Human(), new Blitz());
-		//Controller.doBattle(new PrescientMoron(), new SittingDuck());
+		// Controller.doBattle(new PrescientMoron(), new SittingDuck());
 		//Controller.doBattle(new PrescientMoron(), new Human());
-		// Controller.doBattle(new CoryMcDonald(), new SittingDuck	());
-		Controller.doBattle(new CoryMcDonald(), new Mixed());
-		// fullTournament();
+		// Controller.doBattle(new CoryMcDonald(), new Human());
+		// Controller.doBattle(new CoryMcDonald(), new Mixed());
+		fullTournament();
 	}
 }
