@@ -61,7 +61,7 @@ def breadth_first_search(startState, goalState, heuristic):
             if not (c.x < 0 or c.x >= 500) and not (c.y < 0 or c.y >= 500):
                 new_cost = s.cost + getGreenColor(c.x, c.y) 
                 if (c.x, c.y) in explored:
-                    # Reduces interations but increases 
+                    # Reduces interations but increases runtime
                     if ((c.x,c.y) in explored and new_cost < explored[(c.x,c.y)].cost):
                         for j, item in enumerate(q):
                             if item[1].x == c.x and item[1].y == c.y:

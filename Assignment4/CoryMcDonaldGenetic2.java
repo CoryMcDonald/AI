@@ -3,7 +3,7 @@
 import java.util.PriorityQueue;
 import java.util.*;
 import java.awt.*;
-class CoryMcDonald implements IAgent
+class CoryMcDonaldGenetic2 implements IAgent
 {
 	int iter;
 	int index; // a temporary value used to pass values around
@@ -12,10 +12,17 @@ class CoryMcDonald implements IAgent
 	private Point[] forkedEnemyLocation = new Point[3];
 	private Point[] prevEnemyLocation = new Point[3];
 
-	CoryMcDonald() {
+	public double geneticDefenderTravel = 2.9681700016639985;
+	public double whenAttackEnemyAsFlag = 0.9875496984633174;
+	public double whenFleeAsFlag = 0.08285741182279571;
+	public double whenToDirectlyAttackAsAggressor = 0.9479174240537996; 
+
+	CoryMcDonaldGenetic2()
+	{
 		reset();
+	
 	}
-	CoryMcDonald(boolean shadow) {
+	CoryMcDonaldGenetic2(boolean shadow) {
 		this.shadow = shadow;
 		reset();
 	}
@@ -78,6 +85,7 @@ class CoryMcDonald implements IAgent
 		}
 	}
 
+
 	void beAlternativeDefender(Model m, int i) {
 		// Find the opponent nearest to my flag
 		nearestOpponent(m, Model.XFLAG, Model.YFLAG);
@@ -98,7 +106,7 @@ class CoryMcDonald implements IAgent
 				}
 			}
 			//Oh snap enemy is on my side of the board imma attack em
-			if(numOfOpponentsHalfWay <= 1 && m.getX(i) <  Model.XMAX/2 && numOfOpponentsThirdWay <= 2 )
+			if(numOfOpponentsHalfWay <= 1 && m.getX(i) <  Model.XMAX/geneticDefenderTravel && numOfOpponentsThirdWay <= 2 )
 			{
 				
 				float myX = m.getX(i);
@@ -134,6 +142,7 @@ class CoryMcDonald implements IAgent
 		avoidBombs(m, i);
 	}
 
+
 	void beFlagAttacker(Model m, int i) {		
 		//Head for flag
 		// Avoid opponents
@@ -151,7 +160,8 @@ class CoryMcDonald implements IAgent
 			int deadEnemies = numberOfDeadOpponents(m);
 			//If an enemy is closer to me than 3x from the flag I am under attack I should defend myself!
 			if(((myDistanceFromFlag < enemyDistanceFromFlag && numberOfDeadOpponents(m) == 0) 
-				|| (deadEnemies  > 0 && myDistanceFromFlag > enemyDistanceFromFlag  || m.getEnergyOpponent(index) < .25)) && m.getEnergySelf(i) > .4 && deadEnemies != 3 )			
+				|| (deadEnemies  > 0 && myDistanceFromFlag > enemyDistanceFromFlag  || m.getEnergyOpponent(index) < whenAttackEnemyAsFlag)) 
+				&& m.getEnergySelf(i) > whenFleeAsFlag && deadEnemies != 3 )			
 			{
 				// Get close enough to throw a bomb at the enemy
 				float dx = myX - enemyX;
@@ -216,6 +226,7 @@ class CoryMcDonald implements IAgent
 	}
 
 
+
 	void beAggressor(Model m, int i) {
 		float myX = m.getX(i);
 		float myY = m.getY(i);
@@ -236,7 +247,7 @@ class CoryMcDonald implements IAgent
 				dx *= t;
 				dy *= t;
 
-				if( m.getEnergyOpponent(index) < .01 && m.getEnergySelf(i) > .5)
+				if( m.getEnergyOpponent(index) < whenToDirectlyAttackAsAggressor && m.getEnergySelf(i) > .5)
 				{
 					walkTheDinosaur(m,i, new Point(enemyX, enemyY));
 				}else
@@ -293,7 +304,7 @@ class CoryMcDonald implements IAgent
 
 		int goalThreshold = 5;
 		//Threshold for just going directly to that destination
-		if(sq_dist(myX, myY, goal.x, goal.y) <= Integer.MAX_VALUE)
+		if(sq_dist(myX, myY, goal.x, goal.y) <= 5500)
 		{
 			m.setDestination(i, goal.x, goal.y);
 		}else
