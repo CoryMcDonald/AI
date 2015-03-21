@@ -118,38 +118,22 @@ class ChessState {
 		return false;
 	}
 
+	static ChessMove bestMove;
 	//Mini max
-	static int max(ChessState state, int depth)
+	static int max(ChessState state, int depth, int alpha, int beta) throws Exception
 	{
 		if(depth ==0) { return state.heuristic(); }
-		int max = Integer.MAX_VALUE;
 		for(int i =0;i < 8; i++){
 			for(int j =0; j< 8; j++) {
 				int p = state.getPiece(i, j);
-				if(p != None && state.isWhite(i,j))
+				if(p != None && !state.isWhite(i,j))
 				{
 					ArrayList<Integer> moves = state.moves(i,j);
+					ArrayList<ChessMove> actualMoves = new ArrayList<ChessMove>();
 					if(moves.size() > 0)
 					{
-						ArrayList<ChessMove> actualMoves = new ArrayList<ChessMove>();
-						System.out.print(i + "," + Integer.toString(j+1) + ": ");
-						switch(p) {
-							case None: System.out.print("  "); break;
-							case Pawn: System.out.print("Pawn"); break;
-							case Rook: System.out.print("Rook"); break;
-							case Knight: System.out.print("Knight"); break;
-							case Bishop: System.out.print("Bishop"); break;
-							case Queen: System.out.print("Queen"); break;
-							case King: System.out.print("King"); break;
-						}
-						System.out.print("\n");
-						// System.out.println("\tNumber of moves: " + moves.size());
-
-						int f = 0;
 						for (int moveI =0; moveI<moves.size()/2; moveI++)
 						{
-							//TODO check to see if the origin is the same as the destination. If it is don't do anything
-							//ELSE You need to add it to the chessMove.
 							int base = moveI*2;
 							ChessMove m = new ChessMove();
 							m.xSource = i;
@@ -158,49 +142,81 @@ class ChessState {
 							m.yDest = moves.get(base+1);
 							if(!(m.xSource == m.xDest && m.yDest == m.ySource))
 							{
-								System.out.print((char)(m.xSource+'A') + ",");
-								System.out.print(Integer.toString(m.ySource+1) + " to ");
-								System.out.print((char)(m.xDest+'A') + ",");
-								System.out.print(Integer.toString(m.yDest+1));
-								System.out.print("\n");
-							}else
-							{
-								System.out.print("\n" + m.xSource + " == " + m.xDest + " = ");
-								System.out.print(m.xSource == m.xDest);
-								System.out.print("\n" + m.ySource + " == " + m.yDest + " = ");
-								System.out.print(m.ySource == m.yDest);
-								System.out.print("\n");
+								actualMoves.add(m);
 							}
 						}
 					}
-					// int score = mini(depth-1);
-					// if (score > max)
-					// {
-						// score = max;
-						//todo something with the move?
-					// }
+					//Now let's create each state and then call minimax on it.
+					for(ChessMove move : actualMoves)
+					{
+						ChessState newState = new ChessState(state);
+						int score = min(newState, depth - 1, alpha, beta );
+						if( score >= beta )
+						{
+							return beta;   // fail hard beta-cutoff
+						}
+						if( score > alpha )
+						{
+							alpha = score; // alpha acts like max in MiniMax
+							bestMove = move;
+						}
+					}
 				}
 			}
 		}
-		return max;
+		return alpha;
+	}
+	//Awful, awful copy pasted code. I'm literally just throwing this together.
+	//I don't think I will ever want to come back and code chess. I apologize.
+	static int min(ChessState state, int depth, int alpha, int beta) throws Exception
+	{
+		if(depth ==0) { return -state.heuristic(); }
+		// int alpha = Integer.MAX_VALUE;
+		for(int i =0;i < 8; i++){
+			for(int j =0; j< 8; j++) {
+				int p = state.getPiece(i, j);
+				if(p != None && state.isWhite(i,j))
+				{
+					ArrayList<Integer> moves = state.moves(i,j);
+					ArrayList<ChessMove> actualMoves = new ArrayList<ChessMove>();
+					if(moves.size() > 0)
+					{
+						for (int moveI =0; moveI<moves.size()/2; moveI++)
+						{
+							int base = moveI*2;
+							ChessMove m = new ChessMove();
+							m.xSource = i;
+							m.ySource = j;
+							m.xDest = moves.get(base);
+							m.yDest = moves.get(base+1);
+							if(!(m.xSource == m.xDest && m.yDest == m.ySource))
+							{
+								actualMoves.add(m);
+							}
+						}
+					}
+					//Now let's create each state and then call minimax on it.
+					for(ChessMove move : actualMoves)
+					{
+						ChessState newState = new ChessState(state);
+						int score = max(newState, depth - 1, alpha, beta );
+						if( score <= alpha )
+						{
+				        	return alpha; // fail hard alpha-cutoff
+						}
+						if( score < beta )
+						{
+							beta = score; // beta acts like min in MiniMax
+							bestMove = move;
+						}
+					}
+				}
+			}
+		}
+		return beta;
 	}
 
-	// int mini(int depth)
-	// {
-	// 	if(depth ==0) { return heuristic(); }
-	// 	int min = Integer.MAX_VALUE;
-	// 	for(int i =0;i < 8; i++){
-	// 		for(int j =0; j< 8; j++) {
-	// 			int score = max(depth-1);
-	// 			if(score < min)
-	// 			{
-	// 				min = score;
-	// 				//todo something with the move?
-	// 			}
-	// 		}
-	// 	}
-	// 	return min;
-	// } 
+
 	/// Print a representation of the board to the specified stream
 	void printBoard(PrintStream stream)
 	{
@@ -344,6 +360,10 @@ class ChessState {
 		return pOutMoves;
 	}
 
+	boolean move(ChessMove move) throws Exception
+	{
+		return move(move.xSource, move.ySource, move.xDest, move.yDest);
+	}
 	/// Moves the piece from (xSrc, ySrc) to (xDest, yDest). If this move
 	/// gets a pawn across the board, it becomes a queen. If this move
 	/// takes a king, then it will remove all pieces of the same color as
@@ -497,29 +517,29 @@ class ChessState {
 		String input = "";
 		do {
 			System.out.print("Your move: ");
-			// input = scan.nextLine();
+			input = scan.nextLine();
 			input = input.replace(" ", "").toUpperCase();
-			if(input.length() == 4 || true)
+			if(input.length() == 4 )
 			{
-				// int firstRow = input.charAt(0) - 'A';
-				// int firstMove = Character.getNumericValue(input.charAt(1))-1;
-				// int secondRow = input.charAt(2) - 'A';
-				// int secondMove = Character.getNumericValue(input.charAt(3))-1;
+				int firstRow = input.charAt(0) - 'A';
+				int firstMove = Character.getNumericValue(input.charAt(1))-1;
+				int secondRow = input.charAt(2) - 'A';
+				int secondMove = Character.getNumericValue(input.charAt(3))-1;
 
-				int firstRow  = 1;
-				int firstMove = 0;
-				int secondRow = 2;
-				int secondMove =2;
+				// int firstRow  = 1;
+				// int firstMove = 0;
+				// int secondRow = 2;
+				// int secondMove =2;
 				if(s.isValidMove(firstRow,firstMove, secondRow, secondMove))
 				{
-					// s.move(firstRow, firstMove, secondRow, secondMove);
-					s.move(1, 0, 2, 2);
+					s.move(firstRow, firstMove, secondRow, secondMove);
+					// s.move(1, 0, 2, 2);
 					s.printBoard(System.out);
 					//Opponent
-					max(s,1);
-					// mini(3);
-					break;
-					// s.move(firstRow, firstMove, secondRow, secondMove);
+					max(s,3, Integer.MIN_VALUE, Integer.MAX_VALUE);
+					s.move(bestMove);
+					s.printBoard(System.out);
+					// break;
 					
 				}else
 				{
