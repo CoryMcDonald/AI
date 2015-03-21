@@ -119,20 +119,58 @@ class ChessState {
 	}
 
 	//Mini max
-	int max(int depth)
+	static int max(ChessState state, int depth)
 	{
-		if(depth ==0) { return heuristic(); }
+		if(depth ==0) { return state.heuristic(); }
 		int max = Integer.MAX_VALUE;
 		for(int i =0;i < 8; i++){
 			for(int j =0; j< 8; j++) {
-				if(isWhite(i,j))
+				int p = state.getPiece(i, j);
+				if(p != None && state.isWhite(i,j))
 				{
-					ArrayList<Integer> moves = moves(i,j);
+					ArrayList<Integer> moves = state.moves(i,j);
 					if(moves.size() > 0)
 					{
-						for(Integer s : moves)
+						ArrayList<ChessMove> actualMoves = new ArrayList<ChessMove>();
+						System.out.print(i + "," + Integer.toString(j+1) + ": ");
+						switch(p) {
+							case None: System.out.print("  "); break;
+							case Pawn: System.out.print("Pawn"); break;
+							case Rook: System.out.print("Rook"); break;
+							case Knight: System.out.print("Knight"); break;
+							case Bishop: System.out.print("Bishop"); break;
+							case Queen: System.out.print("Queen"); break;
+							case King: System.out.print("King"); break;
+						}
+						System.out.print("\n");
+						// System.out.println("\tNumber of moves: " + moves.size());
+
+						int f = 0;
+						for (int moveI =0; moveI<moves.size()/2; moveI++)
 						{
-							System.out.println(s);
+							//TODO check to see if the origin is the same as the destination. If it is don't do anything
+							//ELSE You need to add it to the chessMove.
+							int base = moveI*2;
+							ChessMove m = new ChessMove();
+							m.xSource = i;
+							m.ySource = j;
+							m.xDest = moves.get(base);
+							m.yDest = moves.get(base+1);
+							if(!(m.xSource == m.xDest && m.yDest == m.ySource))
+							{
+								System.out.print((char)(m.xSource+'A') + ",");
+								System.out.print(Integer.toString(m.ySource+1) + " to ");
+								System.out.print((char)(m.xDest+'A') + ",");
+								System.out.print(Integer.toString(m.yDest+1));
+								System.out.print("\n");
+							}else
+							{
+								System.out.print("\n" + m.xSource + " == " + m.xDest + " = ");
+								System.out.print(m.xSource == m.xDest);
+								System.out.print("\n" + m.ySource + " == " + m.yDest + " = ");
+								System.out.print(m.ySource == m.yDest);
+								System.out.print("\n");
+							}
 						}
 					}
 					// int score = mini(depth-1);
@@ -459,22 +497,29 @@ class ChessState {
 		String input = "";
 		do {
 			System.out.print("Your move: ");
-			input = scan.nextLine();
+			// input = scan.nextLine();
 			input = input.replace(" ", "").toUpperCase();
-			if(input.length() == 4)
+			if(input.length() == 4 || true)
 			{
-				int firstRow = input.charAt(0) - 'A';
-				int firstMove = Character.getNumericValue(input.charAt(1))-1;
-				int secondRow = input.charAt(2) - 'A';
-				int secondMove = Character.getNumericValue(input.charAt(3))-1;
+				// int firstRow = input.charAt(0) - 'A';
+				// int firstMove = Character.getNumericValue(input.charAt(1))-1;
+				// int secondRow = input.charAt(2) - 'A';
+				// int secondMove = Character.getNumericValue(input.charAt(3))-1;
+
+				int firstRow  = 1;
+				int firstMove = 0;
+				int secondRow = 2;
+				int secondMove =2;
 				if(s.isValidMove(firstRow,firstMove, secondRow, secondMove))
 				{
-					s.move(firstRow, firstMove, secondRow, secondMove);
+					// s.move(firstRow, firstMove, secondRow, secondMove);
+					s.move(1, 0, 2, 2);
 					s.printBoard(System.out);
 					//Opponent
-					s.max(1);
+					max(s,1);
 					// mini(3);
-					s.move(firstRow, firstMove, secondRow, secondMove);
+					break;
+					// s.move(firstRow, firstMove, secondRow, secondMove);
 					
 				}else
 				{
