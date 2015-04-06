@@ -6,11 +6,17 @@ Examples
 Circle Maze
 
 ![](http://i.imgur.com/FDxm3qIm.png)![](http://i.imgur.com/uS8HIf7.png)
-
-Square Maze:
-
-![](https://raw.githubusercontent.com/CoryMcDonald/AI/master/Assignment1/maze2.png)![](https://raw.githubusercontent.com/CoryMcDonald/AI/master/Assignment1/maze2_solved.png)
-
     
 
-Assignemnt 2: A* Search vs. Breadth first - Solving a puzzle and comparing the two algorithms. 
+Assignment 2: A* Search vs. Breadth first - Solving a puzzle and comparing the two algorithms. 
+
+![](https://raw.githubusercontent.com/CoryMcDonald/AI/7e57c9860329c1dc8f4118359b95be20fa729104/Assignment2/path.png)![](https://raw.githubusercontent.com/CoryMcDonald/AI/7e57c9860329c1dc8f4118359b95be20fa729104/Assignment2/path.png)
+
+
+Assignment 3: Genetic Algorithm for determining best path
+
+
+Assignment 4: AI Capture the flag Competition. (The AI Created placed 3rd in class.)
+
+
+Assignment 5: Chess artificial intelligence with alpha-beta pruning.
