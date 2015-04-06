@@ -23,10 +23,10 @@ Solving a puzzle and comparing the two algorithms.
 The AI Created placed 3rd in class
 Winners: 
 
-1. Chandramohan Sol
+1. [Chandramohan Sol](https://github.com/CXSol91)
 2. Charles Burks
 3. Cory McDonald
-4. Matthew Luther
+4. [Matthew Luther](https://github.com/maluther)
 5. Rafael Martins DeSouza
 
 ###Assignment 5: Chess artificial intelligence with alpha-beta pruning.
