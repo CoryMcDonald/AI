@@ -22,6 +22,7 @@ Solving a puzzle and comparing the two algorithms.
 ###Assignment 4: AI Capture the flag Competition.
 The AI Created placed 3rd in class
 Winners: 
+
 1. Chandramohan Sol
 2. Charles Burks
 3. Cory McDonald
