@@ -30,9 +30,9 @@ class TransitionModel {
 		rand = r;
 		model = new NeuralNet();
 		for(int i = 0; i < total_layers; i++) {
-			int in = ((input_dims * (total_layers - i)) + (output_dims * i)) / (total_layers - 1);
+			int in = ((input_dims * (total_layers - i)) + (output_dims * i)) / (total_layers);
 			int j = i + 1;
-			int out = ((input_dims * (total_layers - j)) + (output_dims * j)) / (total_layers - 1);
+			int out = ((input_dims * (total_layers - j)) + (output_dims * j)) / (total_layers);
 			model.layers.add(new Layer(in, out));
 		}
 		model.init(rand);
@@ -115,7 +115,7 @@ class TransitionModel {
 				double[] prediction = model.forwardProp(validationInput.row(i));
 				double[] targ = validationOutput.row(i);
 				for(int j = 0; j < targ.length; j++)
-					err += (targ[i] - prediction[i]) * (targ[i] - prediction[i]);
+					err += (targ[j] - prediction[j]) * (targ[j] - prediction[j]);
 			}
 			err /= validationSize;
 
@@ -224,9 +224,9 @@ class ObservationModel {
 		rand = r;
 		decoder = new NeuralNet();
 		for(int i = 0; i < decoder_layers; i++) {
-			int in = ((belief_dims * (decoder_layers - i)) + (observation_dims * i)) / (decoder_layers - 1);
+			int in = ((belief_dims * (decoder_layers - i)) + (observation_dims * i)) / (decoder_layers);
 			int j = i + 1;
-			int out = ((belief_dims * (decoder_layers - j)) + (observation_dims * j)) / (decoder_layers - 1);
+			int out = ((belief_dims * (decoder_layers - j)) + (observation_dims * j)) / (decoder_layers);
 			decoder.layers.add(new Layer(in, out));
 		}
 		decoder.init(rand);
@@ -234,9 +234,9 @@ class ObservationModel {
 		// Init the encoder
 		encoder = new NeuralNet();
 		for(int i = 0; i < encoder_layers; i++) {
-			int in = ((observation_dims * (encoder_layers - i)) + (belief_dims * i)) / (encoder_layers - 1);
+			int in = ((observation_dims * (encoder_layers - i)) + (belief_dims * i)) / (encoder_layers);
 			int j = i + 1;
-			int out = ((observation_dims * (encoder_layers - j)) + (belief_dims * j)) / (encoder_layers - 1);
+			int out = ((observation_dims * (encoder_layers - j)) + (belief_dims * j)) / (encoder_layers);
 			encoder.layers.add(new Layer(in, out));
 		}
 		encoder.init(rand);
@@ -324,7 +324,7 @@ class ObservationModel {
 				double[] targ = validation.row(i);
 				double[] pred = decoder.forwardProp(encoder.forwardProp(targ));
 				for(int j = 0; j < targ.length; j++)
-					err += (targ[i] - pred[i]) * (targ[i] - pred[i]);
+					err += (targ[j] - pred[j]) * (targ[j] - pred[j]);
 			}
 			err /= validationSize;
 
@@ -385,6 +385,18 @@ class ObservationModel {
 		for(int i = 0; i < obs.length; i++) {
 			ret[i] = obs[i];
 		}
+
+		return ret;
+	}
+
+	/// Encodes observations to predict beliefs
+	double[] observationsToBeliefs(double[] observations) {
+		double[] bel = encoder.forwardProp(observations);
+		double[] ret = new double[bel.length];
+		for(int i = 0; i < bel.length; i++) {
+			ret[i] = bel[i];
+		}
+
 		return ret;
 	}
 }
@@ -412,10 +424,11 @@ class ContentmentModel {
 		// Init the model
 		rand = r;
 		model = new NeuralNet();
+		int fat_end = Math.min(30, beliefDims * 10);
 		for(int i = 0; i < total_layers; i++) {
-			int in = ((beliefDims * (total_layers - i)) + i) / (total_layers - 1);
+			int in = (i == 0 ? beliefDims : ((fat_end * (total_layers - i)) + i) / (total_layers));
 			int j = i + 1;
-			int out = ((beliefDims * (total_layers - j)) + j) / (total_layers - 1);
+			int out = ((fat_end * (total_layers - j)) + j) / (total_layers);
 			model.layers.add(new Layer(in, out));
 		}
 		model.init(rand);
@@ -447,6 +460,7 @@ class ContentmentModel {
 		trainProgress = ((Long)obj.get("trainProgress")).intValue();
 		learningRate = (Double)obj.get("learningRate");
 		prevErr = (Double)obj.get("prevErr");
+		targBuf = new double[1];
 	}
 
 
@@ -475,10 +489,10 @@ class ContentmentModel {
 		double bet = evaluate(better.row(index));
 		double wor = evaluate(worse.row(index));
 		if(wor >= bet) {
-			model.regularize(learningRate, 0.0001);
-			targBuf[0] = wor + 0.02;
+			model.regularize(learningRate, 0.000001);
+			targBuf[0] = wor + 0.05;
 			model.trainIncremental(better.row(index), targBuf, learningRate);
-			targBuf[0] = bet - 0.02;
+			targBuf[0] = bet - 0.05;
 			model.trainIncremental(worse.row(index), targBuf, learningRate);
 		}
 
@@ -515,14 +529,19 @@ class ContentmentModel {
 
 		// Buffer the samples
 		double[] dest = better.row(trainPos);
+		if(bet.length != dest.length)
+			throw new IllegalArgumentException("size mismatch");
 		for(int i = 0; i < bet.length; i++)
 			dest[i] = bet[i];
 		dest = worse.row(trainPos);
+		if(wor.length != dest.length)
+			throw new IllegalArgumentException("size mismatch");
 		for(int i = 0; i < wor.length; i++)
 			dest[i] = wor[i];
-		if(++trainPos >= better.rows())
-			trainPos = 0;
+		trainPos++;
 		trainSize = Math.max(trainSize, trainPos);
+		if(trainPos >= better.rows())
+			trainPos = 0;
 
 		// Do a few iterations of stochastic gradient descent
 		int iters = Math.min(trainIters, trainSize);
@@ -559,6 +578,7 @@ class Plan {
 
 	/// Unmarshaling constructor
 	Plan(JSONArray stepsArr) {
+		steps = new ArrayList<double[]>();
 		Iterator<JSONArray> it = stepsArr.iterator();
 		while(it.hasNext()) {
 			steps.add(Layer.unmarshalVector(it.next()));
@@ -605,10 +625,20 @@ class PlanningSystem {
 		plans = new ArrayList<Plan>();
 		if(populationSize < 2)
 			throw new IllegalArgumentException("The population size must be at least 2");
-		for(int i = 0; i < populationSize; i++)
-			plans.add(new Plan());
 		actionDims = actionDimensions;
 		maxPlanLength = maxPlanLen;
+		for(int i = 0; i < populationSize; i++) {
+			Plan p = new Plan();
+			for(int j = Math.min(maxPlanLen, rand.nextInt(maxPlanLen) + 2); j > 0; j--) {
+				// Add a random action vector to the end
+				double[] newActions = new double[actionDims];
+				for(int k = 0; k < actionDims; k++) {
+					newActions[k] = rand.nextDouble();
+				}
+				p.steps.add(newActions);
+			}
+			plans.add(p);
+		}
 	}
 
 
@@ -660,7 +690,7 @@ class PlanningSystem {
 			}
 		}
 		else if(d < 0.35) { // shorten the plan
-			if(p.size() > 0) {
+			if(p.size() > 1) {
 				p.steps.remove(rand.nextInt(p.size()));
 			}
 		}
@@ -765,7 +795,18 @@ class PlanningSystem {
 	/// Drops the first action in every plan
 	void advanceTime() {
 		for(int i = 0; i < plans.size(); i++) {
-			plans.get(i).steps.remove(0);
+			if(plans.get(i).steps.size() > 0)
+			{
+				// Remove the first action vector in each plan
+				plans.get(i).steps.remove(0);
+				
+				// Add a random action vector to the end
+				double[] newActions = new double[actionDims];
+				for(int j = 0; j < actionDims; j++) {
+					newActions[j] = rand.nextDouble();
+				}
+				plans.get(i).steps.add(newActions);
+			}
 		}
 	}
 
@@ -806,9 +847,18 @@ class PlanningSystem {
 		}
 
 		// Copy the first action vector of the best plan
-		double[] bestActions = plans.get(bestPlan).getActions(0);
-		for(int i = 0; i < bestActions.length; i++) {
-			actions[i] = bestActions[i];
+		if(plans.get(bestPlan).size() > 0)
+		{
+			double[] bestActions = plans.get(bestPlan).getActions(0);
+			for(int i = 0; i < bestActions.length; i++) {
+				actions[i] = bestActions[i];
+			}
+		}
+		else
+		{
+			for(int i = 0; i < actions.length; i++) {
+				actions[i] = 0.0;
+			}
 		}
 	}
 }

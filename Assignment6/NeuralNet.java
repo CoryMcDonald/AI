@@ -83,6 +83,9 @@ class Layer {
 
 
 	void copy(Layer src) throws Exception {
+		if(src.weights.rows() != weights.rows() || src.weights.cols() != weights.cols())
+			throw new IllegalArgumentException("mismatching sizes");
+		weights.setSize(0, src.weights.cols());
 		weights.copyPart(src.weights, 0, 0, src.weights.rows(), src.weights.cols());
 		for(int i = 0; i < bias.length; i++) {
 			bias[i] = src.bias[i];
@@ -112,7 +115,7 @@ class Layer {
 
 	void feedForward(double[] in) {
 		if(in.length != weights.rows())
-			throw new IllegalArgumentException("size mismatch");
+			throw new IllegalArgumentException("size mismatch. " + Integer.toString(in.length) + " != " + Integer.toString(weights.rows()));
 		for(int i = 0; i < net.length; i++)
 			net[i] = bias[i];
 		for(int j = 0; j < weights.rows(); j++) {
@@ -126,7 +129,7 @@ class Layer {
 
 	void feedForward2(double[] in1, double[] in2) {
 		if(in1.length + in2.length != weights.rows())
-			throw new IllegalArgumentException("size mismatch");
+			throw new IllegalArgumentException("size mismatch. " + Integer.toString(in1.length) + " + " + Integer.toString(in2.length) + " != " + Integer.toString(weights.rows()));
 		for(int i = 0; i < net.length; i++)
 			net[i] = bias[i];
 		for(int j = 0; j < in1.length; j++) {
@@ -212,7 +215,7 @@ class Layer {
 
 	void bendHinge(double learningRate) {
 		for(int i = 0; i < hinge.length; i++) {
-			hinge[i] = Math.max(-1.0, Math.min(1.0, hinge[i] + learningRate * error[i] * (Math.sqrt(net[i] * net[i] + 1) - 1)));
+			hinge[i] = Math.max(-1.0, Math.min(1.0, hinge[i] + learningRate * error[i] * (Math.sqrt(net[i] * net[i] + 1.0) - 1.0)));
 		}
 	}
 
@@ -306,6 +309,8 @@ class NeuralNet {
 	/// Copies all the weights and biases from "that" into "this".
 	/// (Assumes the corresponding topologies already match.)
 	void copy(NeuralNet that) throws Exception {
+		if(layers.size() != that.layers.size())
+			throw new IllegalArgumentException("Unexpected number of layers");
 		for(int i = 0; i < layers.size(); i++) {
 			layers.get(i).copy(that.layers.get(i));
 		}
@@ -347,7 +352,7 @@ class NeuralNet {
 		Layer l = layers.get(i);
 		l.computeError(target);
 		l.deactivate();
-		for(i--; i > 0; i--) {
+		for(i--; i >= 0; i--) {
 			Layer upstream = layers.get(i);
 			l.feedBack(upstream.error);
 			upstream.deactivate();
