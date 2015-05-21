@@ -142,7 +142,7 @@ class Main {
 			frame.setVisible(true);									//you have to be able to see the JFrame
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	//Honestly don't know what this does, but it has to be here.
 			frame.setLocationRelativeTo(null);						//sets the window up in the middle of the screen
-			Timer animationTimer = new Timer(20, new ActionListener(){		//animation timer for the game, repaints the bird, walls, and background every 20 milliseconds
+			Timer animationTimer = new Timer(1, new ActionListener(){		//animation timer for the game, repaints the bird, walls, and background every 20 milliseconds
 				public void actionPerformed(ActionEvent event) {
 					try{
 						game.repaint();
