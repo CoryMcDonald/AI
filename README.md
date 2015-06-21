@@ -13,7 +13,7 @@ Circle Maze
 ###Assignment 2: A* Search vs. Breadth first
 Solving a puzzle and comparing the two algorithms. 
 
-![](https://raw.githubusercontent.com/CoryMcDonald/AI/7e57c9860329c1dc8f4118359b95be20fa729104/Assignment2/path.png)![](https://raw.githubusercontent.com/CoryMcDonald/AI/7e57c9860329c1dc8f4118359b95be20fa729104/Assignment2/path.png)
+![](https://raw.githubusercontent.com/CoryMcDonald/AI/220ee8fd752723c6ad5125d9b2f32dc62901f783/Assignment2/path.png)![](https://raw.githubusercontent.com/CoryMcDonald/AI/7e57c9860329c1dc8f4118359b95be20fa729104/Assignment2/path.png)
 
 
 ###Assignment 3: Genetic Algorithm for determining best path
